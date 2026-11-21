@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 
 import { Client } from 'pg';
-
+import { dropDatabase } from './drop-database';
 import { pgTarget } from './pg-target';
 
 /**
@@ -31,7 +31,7 @@ export const freshDatabase = async (): Promise<{
     const cleaner = new Client({ connectionString: url });
     await cleaner.connect();
     try {
-      await cleaner.query(`DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
+      await dropDatabase(cleaner, name);
     } finally {
       await cleaner.end();
     }
