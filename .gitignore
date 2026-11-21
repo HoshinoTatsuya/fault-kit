@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.jest-report.json
+*.tsbuildinfo
+.env
+.DS_Store
+.jest-report-docker.json
+.jest-report-process.json
+.jest-report-examples.json
+.jest-report-examples-process.json

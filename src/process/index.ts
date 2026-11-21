@@ -1,0 +1,14 @@
+export { descendantsOf } from './descendants-of';
+export type { ExitInfo } from './exit-info.type';
+export { LineReader } from './line-reader';
+export { listProcesses } from './list-processes';
+export { orphansOf } from './orphans-of';
+export type { ProcessInfo } from './process-info.type';
+export { processInfoOf } from './process-info-of';
+export { ShellWrappedProcess } from './shell-wrapped-process';
+export { SigtermIgnorer } from './sigterm-ignorer';
+export { sigtermIgnorerCommand } from './sigterm-ignorer-command';
+export { spawnBehindShell } from './spawn-behind-shell';
+export type { SpawnBehindShellOptions } from './spawn-behind-shell-options.type';
+export { UnsupportedPlatformError } from './unsupported-platform.error';
+export { waitForLine } from './wait-for-line';

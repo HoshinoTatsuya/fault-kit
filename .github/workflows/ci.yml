@@ -1,0 +1,79 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Specs need real Postgres and Redis; with these URLs set, scripts/with-postgres.sh and
+    # scripts/with-redis.sh do not start their own containers.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U test" --health-interval 2s --health-timeout 5s --health-retries 30
+      redis:
+        image: redis:7.4-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 2s --health-timeout 5s --health-retries 30
+    env:
+      PG_TEST_URL: postgres://test:test@127.0.0.1:5432/postgres
+      REDIS_TEST_URL: redis://127.0.0.1:6379
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run typecheck
+      - run: pnpm run lint
+      # Grouped run (jest-groups): groups of at most 300 tests, at most 2 workers each.
+      - run: pnpm test
+      - run: pnpm run test:examples
+      - run: pnpm run test:consumers
+      - run: pnpm run build
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jest-reports-check
+          path: .jest-report*.json
+          if-no-files-found: ignore
+
+  containers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Process specs send signals, so they run only inside a throwaway Linux container without network
+      # (scripts/in-linux-container.sh); its jest resolver binding comes from a prepared docker volume.
+      - run: scripts/prepare-linux-deps.sh
+      - run: pnpm run test:process
+      - run: pnpm run test:examples:process
+      # getaddrinfo with the container's DNS and /proc on glibc, inside node:24-bookworm-slim.
+      - run: pnpm run test:docker
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jest-reports-containers
+          path: .jest-report*.json
+          if-no-files-found: ignore

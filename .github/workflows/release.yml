@@ -1,0 +1,61 @@
+name: release
+
+# Publishes to npmjs.com on a version tag (vX.Y.Z) via npm trusted publishing
+# (OIDC, no token). The tag must match package.json; an already published
+# version is skipped, so re-running the workflow is safe.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # prepublishOnly runs typecheck, all suites (Postgres, Redis, process specs in a Linux container,
+    # docker specs, consumer matrix) and the build: the same services and volume as in ci.yml.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U test" --health-interval 2s --health-timeout 5s --health-retries 30
+      redis:
+        image: redis:7.4-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 2s --health-timeout 5s --health-retries 30
+    env:
+      PG_TEST_URL: postgres://test:test@127.0.0.1:5432/postgres
+      REDIS_TEST_URL: redis://127.0.0.1:6379
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: scripts/prepare-linux-deps.sh
+      - name: Tag matches package.json
+        run: |
+          VERSION="$(node -p 'require("./package.json").version')"
+          [ "${GITHUB_REF_NAME}" = "v${VERSION}" ] || { echo "tag ${GITHUB_REF_NAME} != v${VERSION}"; exit 1; }
+      - name: Skip if already published
+        id: published
+        run: |
+          NAME="$(node -p 'require("./package.json").name')"
+          VERSION="$(node -p 'require("./package.json").version')"
+          if [ "$(npm view "${NAME}@${VERSION}" version 2>/dev/null)" = "${VERSION}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"; echo "${NAME}@${VERSION} is already on npm"
+          fi
+      # prepublishOnly runs typecheck, the full test suite and the build.
+      - if: steps.published.outputs.skip != 'true'
+        run: npm publish --provenance --access public

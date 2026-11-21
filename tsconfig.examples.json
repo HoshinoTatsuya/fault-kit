@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "paths": {
+      "@hoshinotatsuya/fault-kit": ["./src/index.ts"],
+      "@hoshinotatsuya/fault-kit/tcp": ["./src/tcp/index.ts"],
+      "@hoshinotatsuya/fault-kit/dns": ["./src/dns/index.ts"],
+      "@hoshinotatsuya/fault-kit/postgres": ["./src/postgres/index.ts"],
+      "@hoshinotatsuya/fault-kit/redis": ["./src/redis/index.ts"],
+      "@hoshinotatsuya/fault-kit/process": ["./src/process/index.ts"]
+    }
+  },
+  "include": ["examples"]
+}
