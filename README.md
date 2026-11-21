@@ -80,10 +80,12 @@ it('concurrent deliveries are compared as multisets', () => {
 });
 
 it('the work yields the event loop between batches', async () => {
-  const rows = Array.from({ length: 10_000 }, (_, i) => i);
   const { turns, longestTurnShare } = await turnsDuring(async () => {
     for (let batch = 0; batch < 10; batch += 1) {
-      rows.slice(batch * 1000, (batch + 1) * 1000).reduce((a, b) => a + b, 0);
+      // Milliseconds of CPU per batch: thread CPU time is accounted in scheduler ticks.
+      let sum = 0;
+      for (let i = 0; i < 5_000_000; i += 1) sum += i % 7;
+      if (sum < 0) throw new Error('unreachable');
       await new Promise((resolve) => setImmediate(resolve));
     }
   });
@@ -105,7 +107,9 @@ boundary event is late for `expectSettlesBefore`. A thenable is called exactly o
 **`turnsDuring`** traces the work itself through `async_hooks`: `turns` — in how many loop turns its
 code ran, `longestTurnShare` — the longest turn's share of its thread CPU time. Waiting on the
 network does not add turns, so the recipe is "`longestTurnShare < 0.5` and `turns ≥` number of
-batches" (a measured healthy shape is 0.1–0.2, a defective one above 0.9). `await
+batches" (a measured healthy shape is 0.1–0.2, a defective one above 0.9). Thread CPU time is accounted
+in scheduler ticks (a few milliseconds on Linux): each measured batch must take longer than that, or a
+few microseconds of work per turn read as one turn holding everything. `await
 Promise.resolve()` is not a turn. Work queued before the call and foreign code it waits for are not
 traced.
 

@@ -80,10 +80,12 @@ it('concurrent deliveries are compared as multisets', () => {
 });
 
 it('the work yields the event loop between batches', async () => {
-  const rows = Array.from({ length: 10_000 }, (_, i) => i);
   const { turns, longestTurnShare } = await turnsDuring(async () => {
     for (let batch = 0; batch < 10; batch += 1) {
-      rows.slice(batch * 1000, (batch + 1) * 1000).reduce((a, b) => a + b, 0);
+      // Milliseconds of CPU per batch: thread CPU time is accounted in scheduler ticks.
+      let sum = 0;
+      for (let i = 0; i < 5_000_000; i += 1) sum += i % 7;
+      if (sum < 0) throw new Error('unreachable');
       await new Promise((resolve) => setImmediate(resolve));
     }
   });
@@ -105,7 +107,9 @@ it('the work yields the event loop between batches', async () => {
 **`turnsDuring`** прослеживает саму работу через `async_hooks`: `turns` — в скольких оборотах цикла
 выполнялся её код, `longestTurnShare` — доля самого длинного оборота в процессорном времени её
 потока. Ожидание сети оборотов не добавляет, поэтому рецепт — «`longestTurnShare < 0.5` и `turns ≥`
-числа партий» (замер: исправная форма 0,1–0,2, дефектная — больше 0,9). `await Promise.resolve()`
+числа партий» (замер: исправная форма 0,1–0,2, дефектная — больше 0,9). Время потока учитывается
+квантами планировщика (на Linux — единицы миллисекунд): каждая измеряемая партия обязана быть
+длиннее, иначе работа в несколько микросекунд на ход читается как один ход, державший всё. `await Promise.resolve()`
 оборотом не считается. Работа, поставленная до вызова, и чужой код, который она ждёт, не
 прослеживаются.
 

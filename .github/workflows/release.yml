@@ -43,6 +43,8 @@ jobs:
           registry-url: https://registry.npmjs.org
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # prepublishOnly runs the container specs before its own build; they pack dist/.
+      - run: pnpm run build
       - run: scripts/prepare-linux-deps.sh
       - name: Tag matches package.json
         run: |

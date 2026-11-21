@@ -64,6 +64,8 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # The container specs pack dist/ into the container: build it first.
+      - run: pnpm run build
       # Process specs send signals, so they run only inside a throwaway Linux container without network
       # (scripts/in-linux-container.sh); its jest resolver binding comes from a prepared docker volume.
       - run: scripts/prepare-linux-deps.sh
