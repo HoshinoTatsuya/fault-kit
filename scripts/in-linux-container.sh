@@ -31,7 +31,10 @@ fi
 NAME="fault-kit-linux-$$"
 # Снять контейнер, если сняли сам скрипт (потолок прогона, Ctrl+C): клиент docker при смерти его не останавливает.
 trap 'docker rm -f "${NAME}" >/dev/null 2>&1 || true' EXIT
+# Под пользователем хоста: файлы, которые пишет команда (кэш раннера групп, отчёты), остаются
+# его собственными. От root на Linux следующий шаг на хосте получал EACCES на них.
 docker run --rm --init --network none --cpus 2 --memory 3g --name "${NAME}" \
+  --user "$(id -u):$(id -g)" -e HOME=/tmp \
   -v "${ROOT}:${ROOT}" -v "${VOLUME}:/linux-deps:ro" -w "${ROOT}" \
   -e NODE_PATH=/linux-deps/node_modules -e FAULT_KIT_IN_CONTAINER=1 -e CI=true \
   "${IMAGE}" "$@"
