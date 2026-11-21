@@ -1,6 +1,6 @@
 {
   "name": "@hoshinotatsuya/fault-kit",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Fault injection for specs: a freezing TCP proxy, a silent and slow DNS server, Postgres horizon/writer/lock holders, Redis pause and client kills, a shell wrapper without exec with orphan detection, and deadline assertions without wall clocks.",
   "keywords": [
     "fault-injection",

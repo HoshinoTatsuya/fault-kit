@@ -13,6 +13,8 @@ import type { DockerDnsOptions } from './docker-dns-options.type';
  * частной сети). Он зависит от сети хоста: где маршрута нет, ядро ответит
  * «недоступно» сразу, и getaddrinfo откажет мгновенно, а не зависнет.
  *
+ * Домены поиска хоста в контейнер не попадают: без `search` — `--dns-search .`.
+ *
  * Работает на сети bridge по умолчанию (resolv.conf пишется как есть); в
  * пользовательской сети docker отвечает встроенным DNS 127.0.0.11 и
  * пересылает запросы — заданный адрес будет вышестоящим, а не первым.
@@ -36,7 +38,14 @@ export const dockerDnsArgs = (options: DockerDnsOptions = {}): readonly string[]
     }
     args.push('--dns-option', `${option}:${value}`);
   }
-  for (const domain of options.search ?? []) {
+  const search = options.search ?? [];
+  if (search.length === 0) {
+    // Без своего списка docker передал бы контейнеру домены поиска ХОСТА: на облачной машине
+    // getaddrinfo после отказа повторял имя с их суффиксом (silent.test.<регион>.compute.internal)
+    // — набор запросов и время ожидания зависели от машины. `.` — «доменов поиска нет».
+    args.push('--dns-search', '.');
+  }
+  for (const domain of search) {
     if (
       typeof domain !== 'string' ||
       !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i.test(domain)

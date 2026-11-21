@@ -177,8 +177,20 @@ describe('addressToBytes', () => {
 });
 
 describe('dockerDnsArgs', () => {
-  it('по умолчанию — 127.0.0.1 внутри контейнера, без опций', () => {
-    expect(dockerDnsArgs()).toEqual(['--dns', '127.0.0.1']);
+  it('по умолчанию — 127.0.0.1 внутри контейнера, без опций и без доменов поиска хоста', () => {
+    expect(dockerDnsArgs()).toEqual(['--dns', '127.0.0.1', '--dns-search', '.']);
+    expect(dockerDnsArgs({ search: [] })).toEqual(['--dns', '127.0.0.1', '--dns-search', '.']);
+  });
+
+  it('свои домены поиска — только они', () => {
+    expect(dockerDnsArgs({ search: ['corp.test', 'svc.test'] })).toEqual([
+      '--dns',
+      '127.0.0.1',
+      '--dns-search',
+      'corp.test',
+      '--dns-search',
+      'svc.test',
+    ]);
   });
 
   it('опции resolv.conf и свой адрес', () => {
@@ -189,6 +201,8 @@ describe('dockerDnsArgs', () => {
       'timeout:1',
       '--dns-option',
       'attempts:2',
+      '--dns-search',
+      '.',
     ]);
   });
 

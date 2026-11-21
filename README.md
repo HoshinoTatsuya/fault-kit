@@ -178,7 +178,8 @@ answers set TC, unsupported opcode/question count/class get NOTIMP/FORMERR/REFUS
 (also `'udp'`/`'tcp'` only), `delay(ms)`, `respond()`, `waitForQueries(n)`, `queries()`, `errors()`.
 CNAME, PTR, MX and wildcards are not served. `dns.lookup` (getaddrinfo) reads only
 `/etc/resolv.conf`, so it is tested in a container: start the server on `127.0.0.1:53` inside it and
-pass `dockerDnsArgs()` (bridge network). Cancel pending resolver queries at the end of a test
+pass `dockerDnsArgs()` (bridge network). The host's search domains are not passed to the container
+(`--dns-search .` unless you give `search`), so the queried names do not depend on the machine. Cancel pending resolver queries at the end of a test
 (`resolver.cancel()`), or the process lives until the resolver's own timeout.
 
 ## Postgres: holders and terminations

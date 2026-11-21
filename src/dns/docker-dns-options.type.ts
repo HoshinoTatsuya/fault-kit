@@ -9,6 +9,6 @@ export interface DockerDnsOptions {
   readonly attempts?: number;
   /** `ndots:N` — сколько точек в имени, чтобы сначала пробовать его как полное (0..15). */
   readonly ndots?: number;
-  /** Домены поиска (`--dns-search`): короткое имя дополняется ими по порядку. */
+  /** Домены поиска (`--dns-search`): короткое имя дополняется ими по порядку. Не задан или пуст — доменов поиска нет (а не домены хоста). */
   readonly search?: readonly string[];
 }

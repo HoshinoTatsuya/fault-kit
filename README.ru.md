@@ -177,7 +177,8 @@ export const dockerArgs = ['run', '--rm', ...dockerDnsArgs({ timeoutSeconds: 1, 
 REFUSED); `silence()` (и только `'udp'`/`'tcp'`), `delay(ms)`, `respond()`, `waitForQueries(n)`,
 `queries()`, `errors()`. CNAME, PTR, MX и wildcard не отдаются. `dns.lookup` (getaddrinfo) читает
 только `/etc/resolv.conf`, поэтому проверяется в контейнере: сервер поднимается на `127.0.0.1:53`
-внутри, резолвер направляет `dockerDnsArgs()` (сеть bridge). Запросы резолвера в конце теста
+внутри, резолвер направляет `dockerDnsArgs()` (сеть bridge). Домены поиска хоста в контейнер не попадают (`--dns-search .`, если
+не задан `search`): имена запросов не зависят от машины. Запросы резолвера в конце теста
 отменяйте (`resolver.cancel()`), иначе процесс живёт до потолка резолвера.
 
 ## Postgres: держатели и обрывы

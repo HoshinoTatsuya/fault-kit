@@ -5,6 +5,16 @@ All notable changes to this package are documented here. The format follows
 with the pre-1.0 rule that a minor version may break the API (each such version has a
 **Migration** section).
 
+## [0.3.3] — 2026-11-21
+
+### Fixed
+- `dockerDnsArgs` no longer lets the host's search domains into the container: without `search` (or
+  with an empty list) it adds `--dns-search .`. On a cloud machine getaddrinfo retried a silenced
+  name with the host's suffix (`silent.test.<region>.compute.internal`), so the set of queries and
+  the time to fail depended on the machine. Give `search` to set your own domains, as before.
+- Container specs run as the host user (`scripts/in-linux-container.sh`); run as root they left
+  root-owned files in the working tree on Linux.
+
 ## [0.3.2] — 2026-11-21
 
 ### Changed
